@@ -3,13 +3,15 @@ import * as Joi from 'joi';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm'
-import { RestaurantsModule } from './restaurants/restaurants.module';
+import { UsersModule } from './users/users.module';
+import { User } from './users/entities/user.entity';
+import { CommonModule } from './common/common.module';
 
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, //어플리케이션의 어디서나 config파일에 접근 가능
+      isGlobal: true,
       envFilePath: process.env.NODE_ENV === 'dev' ? '.env.dev' : '.env.test',
       ignoreEnvFile: process.env.NODE_ENV === 'prod',
       validationSchema: Joi.object({
@@ -29,13 +31,14 @@ import { RestaurantsModule } from './restaurants/restaurants.module';
       username: process.env.DB_USERNAME, 
       password: process.env.DB_PASSWORD, 
       database: process.env.DB_NAME, 
-      synchronize: true, //데이터베이스를 너의 모듈의 현재상태로 마이그레이션 한다.
-      logging: true, //데이터베이스에서 무슨 일이 일어나는지 콘솔에 표시함 
+      synchronize: process.env.NODE_ENV !== 'prod',
+      logging: process.env.NODE_ENV !== 'prod',
+      entities: [User],
     }),
     GraphQLModule.forRoot({
       autoSchemaFile: true,
     }), 
-    RestaurantsModule,
+    UsersModule, CommonModule,
   ],
   controllers: [],
   providers: [],
