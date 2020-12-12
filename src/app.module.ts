@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import * as Joi from 'joi';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -7,7 +8,7 @@ import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
 import { CommonModule } from './common/common.module';
 import { JwtModule } from './jwt/jwt.module';
-
+import { jwtMiddleware } from './jwt/jwt.middleware';
 
 @Module({
   imports: [
@@ -50,4 +51,13 @@ import { JwtModule } from './jwt/jwt.module';
   providers: [],
 })
 
-export class AppModule {}
+export class AppModule {
+  configure(consumer:MiddlewareConsumer) {
+    consumer.apply(jwtMiddleware).forRoutes({
+      //forRoute는 어떤 라우트에서 쓸 건지 설정해 줄 수 있음
+      //forRoute 대신에 exclude를 사용하면 특정 path만 제외하고 설정할 수 있음
+      path: '/graphql',
+      method: RequestMethod.ALL,
+    })
+  }
+}
