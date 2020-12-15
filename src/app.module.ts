@@ -1,5 +1,6 @@
+import { Verification } from './users/entities/verification.entity';
 
-import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import * as Joi from 'joi';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -8,7 +9,9 @@ import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
 import { CommonModule } from './common/common.module';
 import { JwtModule } from './jwt/jwt.module';
-import { jwtMiddleware } from './jwt/jwt.middleware';
+import { JwtMiddleware } from './jwt/jwt.middleware';
+import { AuthModule } from './auth/auth.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -24,6 +27,9 @@ import { jwtMiddleware } from './jwt/jwt.middleware';
         DB_PASSWORD: Joi.string().required(),
         DB_NAME: Joi.string().required(),
         PRIVATE_KEY: Joi.string().required(),
+        MAILGUN_API_KEY: Joi.string().required(),
+        MAILGUN_DOMAIN_NAME: Joi.string().required(),
+        MAILGUN_FROM_EMAIL: Joi.string().required(),
       }),
     }),
     
@@ -36,26 +42,29 @@ import { jwtMiddleware } from './jwt/jwt.middleware';
       database: process.env.DB_NAME, 
       synchronize: process.env.NODE_ENV !== 'prod',
       logging: process.env.NODE_ENV !== 'prod',
-      entities: [User],
+      entities: [User, Verification],
     }),
     GraphQLModule.forRoot({
       autoSchemaFile: true,
+      context: ({ req }) => ({ user : req['user'] }),
     }), 
     JwtModule.forRoot({
       privateKey: process.env.PRIVATE_KEY,
     }),
-    UsersModule, 
-    CommonModule, 
+    MailModule.forRoot({
+      apiKey: process.env.MAILGUN_API_KEY,
+      domain: process.env.MAILGUN_DOMAIN_NAME,
+      fromEmail: process.env.MAILGUN_FROM_EMAIL,
+    }),
+    UsersModule,
   ],
   controllers: [],
   providers: [],
 })
 
-export class AppModule {
+export class AppModule implements NestModule {
   configure(consumer:MiddlewareConsumer) {
-    consumer.apply(jwtMiddleware).forRoutes({
-      //forRoute는 어떤 라우트에서 쓸 건지 설정해 줄 수 있음
-      //forRoute 대신에 exclude를 사용하면 특정 path만 제외하고 설정할 수 있음
+    consumer.apply(JwtMiddleware).forRoutes({
       path: '/graphql',
       method: RequestMethod.ALL,
     })
