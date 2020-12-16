@@ -1,4 +1,4 @@
-import { MailService } from './../mail/mail.service';
+
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,6 +13,7 @@ import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { Verification } from './entities/verification.entity';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
 import { UserProfileOutput } from './dtos/user-profile.dto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class UserService {
@@ -22,7 +23,6 @@ export class UserService {
     private readonly verifications: Repository<Verification>,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
-
   ) {}
 
   async createAccount({
@@ -54,7 +54,7 @@ export class UserService {
     try {
       const user = await this.users.findOne(
         { email },
-        { select: ['password'] },
+        { select: ['id', 'password'] },
       );
       if (!user) {
         return {
@@ -69,6 +69,7 @@ export class UserService {
           error: 'Wrong password',
         };
       }
+
       const token = this.jwtService.sign(user.id);
       return {
         ok: true,
@@ -77,7 +78,7 @@ export class UserService {
     } catch (error) {
       return {
         ok: false,
-        error,
+        error: "Can't log user in.",
       };
     }
   }
@@ -103,7 +104,9 @@ export class UserService {
       if (email) {
         user.email = email;
         user.verified = false;
-        const verification = await this.verifications.save(this.verifications.create({ user }));
+        const verification = await this.verifications.save(
+          this.verifications.create({ user }),
+        );
         this.mailService.sendVerificationEmail(user.email, verification.code);
       }
       if (password) {
@@ -132,7 +135,7 @@ export class UserService {
       }
       return { ok: false, error: 'Verification not found.' };
     } catch (error) {
-      return { ok: false, error };
+      return { ok: false, error: 'Could not verify email.' };
     }
   }
 }
