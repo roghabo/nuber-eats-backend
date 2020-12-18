@@ -1,15 +1,18 @@
-import { VerifyEmailOutput, VerifyEmailInput } from './dtos/verify-email.dto';
-import { EditProfileOutput, EditProfileInput } from './dtos/edit-profile.dto';
-import { UserProfileInput, UserProfileOutput } from './dtos/user-profile.dto';
-import { AuthGuard } from './../auth/auth.guard';
-import { AuthUser } from './../auth/auth-user.decorator';
-import { LoginOutput, LoginInput } from './dtos/login.dto';
-import { UserService } from './users.service';
-import { User } from './entities/user.entity';
-import { Resolver, Query, Mutation, Args } from "@nestjs/graphql";
-import { CreateAccountInput, CreateAccountOutput } from './dtos/create-account.dto';
 import { UseGuards } from '@nestjs/common';
-
+import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { AuthUser } from 'src/auth/auth-user.decorator';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { Role } from 'src/auth/role.decorator';
+import {
+  CreateAccountInput,
+  CreateAccountOutput,
+} from './dtos/create-account.dto';
+import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
+import { LoginInput, LoginOutput } from './dtos/login.dto';
+import { UserProfileInput, UserProfileOutput } from './dtos/user-profile.dto';
+import { VerifyEmailInput, VerifyEmailOutput } from './dtos/verify-email.dto';
+import { User } from './entities/user.entity';
+import { UserService } from './users.service';
 
 @Resolver(of => User)
 export class UserResolver {
@@ -28,21 +31,21 @@ export class UserResolver {
   }
 
   @Query(returns => User)
-  @UseGuards(AuthGuard)
+  @Role(['Any'])
   me(@AuthUser() authUser: User) {
     return authUser;
   }
 
-  @UseGuards(AuthGuard)
   @Query(returns => UserProfileOutput)
+  @Role(['Any'])
   async userProfile(
     @Args() userProfileInput: UserProfileInput,
   ): Promise<UserProfileOutput> {
     return this.usersService.findById(userProfileInput.userId);
   }
 
-  @UseGuards(AuthGuard)
   @Mutation(returns => EditProfileOutput)
+  @Role(['Any'])
   async editProfile(
     @AuthUser() authUser: User,
     @Args('input') editProfileInput: EditProfileInput,

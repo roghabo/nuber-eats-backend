@@ -1,40 +1,28 @@
-import { UpdateRestaurantDto } from './dtos/update-restaurant.dto';
-import { RestaurantService } from './restaurants.service';
+import { SetMetadata } from '@nestjs/common';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { AuthUser } from 'src/auth/auth-user.decorator';
+import { Role } from 'src/auth/role.decorator';
+import { User, UserRole } from 'src/users/entities/user.entity';
+import {
+  CreateRestaurantInput,
+  CreateRestaurantOutput,
+} from './dtos/create-restaurant.dto';
 import { Restaurant } from './entities/restaurant.entity';
-import { Args, Mutation, Query, Resolver } from "@nestjs/graphql";
-import { CreateBatchDelegateFnOptions } from 'graphql-tools';
-import { CreateRestaurantDto } from './dtos/create-restaurant.dto';
+import { RestaurantService } from './restaurants.service';
 
-
-@Resolver(of => Restaurant) 
+@Resolver(of => Restaurant)
 export class RestaurantResolver {
-    constructor(private readonly restaurantService: RestaurantService) {}
-    @Query(returns => [Restaurant])
-    restaurants():Promise<Restaurant[]> {
-        return this.restaurantService.getAll();
-    }
-    @Mutation(returns => Boolean)
-    async createRestaurant(@Args('input') createRestaurantDto: CreateRestaurantDto
-    ): Promise<boolean> {
-        try {
-            await this.restaurantService.createRestaurant(createRestaurantDto);
-            return true;
-        }catch(e){
-            console.log(e);
-            return false;
-        }
-    }
-    @Mutation(returns=>Boolean)
-    async updateRestaurant(
-        @Args('input') updateRestaurantDto: UpdateRestaurantDto 
-    ):Promise<boolean> { 
-        try {
-            await this.restaurantService.updateRestaurant(updateRestaurantDto);
-            return true;
+  constructor(private readonly restaurantService: RestaurantService) {}
 
-        }catch(e) {
-            console.log(e);
-            return false;
-        }
-     }
+  @Mutation(returns => CreateRestaurantOutput)
+  @Role(['Owner'])
+  async createRestaurant(
+    @AuthUser() authUser: User,
+    @Args('input') createRestaurantInput: CreateRestaurantInput,
+  ): Promise<CreateRestaurantOutput> {
+    return this.restaurantService.createRestaurant(
+      authUser,
+      createRestaurantInput,
+    );
+  }
 }
