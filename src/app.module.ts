@@ -25,6 +25,8 @@ import { Category } from './restaurants/entities/cetegory.entity';
 import { RestaurantsModule } from './restaurants/restaurants.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -78,6 +80,7 @@ import { PaymentsModule } from './payments/payments.module';
         };
       },
     }),
+    ScheduleModule.forRoot(),
     JwtModule.forRoot({
       privateKey: process.env.PRIVATE_KEY,
     }),
@@ -92,6 +95,7 @@ import { PaymentsModule } from './payments/payments.module';
     OrdersModule,
     PaymentsModule,
     CommonModule,
+    UploadsModule,
   ],
   controllers: [],
   providers: [],

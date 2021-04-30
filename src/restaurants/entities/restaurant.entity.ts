@@ -31,7 +31,7 @@ export class Restaurant extends CoreEntity {
   @ManyToOne(
     type => Category,
     category => category.restaurants,
-    { nullable: true, onDelete: 'SET NULL' },
+    { nullable: true, onDelete: 'SET NULL', eager: true },
   )
   category: Category;
 
@@ -59,4 +59,12 @@ export class Restaurant extends CoreEntity {
     dish => dish.restaurant,
   )
   menu: Dish[];
+
+  @Field(type => Boolean)
+  @Column({ default: false })
+  isPromoted: boolean;
+
+  @Field(type => Date, { nullable: true })
+  @Column({ nullable: true })
+  promotedUntil: Date;
 }
